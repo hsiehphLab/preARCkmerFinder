@@ -1,0 +1,230 @@
+import sys
+import os
+import re
+
+
+configfile: "config.yaml"
+
+
+if not os.path.exists( "log" ):
+        os.makedirs("log" )
+
+# wildcard_constraints:
+#     # This constraint ensures the entire value captured by szDatasetName
+#     # does NOT end with the unwanted suffix.
+#     szDatasetName = r"^(?!.*_no_low_freq_kmers.+)"
+
+#wildcard_constraints:
+#        szDatasetName=r".*(?!.*_no_low_freq_kmers)"
+
+wildcard_constraints:
+    # Restrict the value of {szDatasetName} to exclude periods globally
+    szDatasetName = "[^.]+"
+    
+def aGetAllDatasetNames():
+	aDatasets = []
+	with open( config["manifest"], "r" ) as fManifest:
+		for szLine in fManifest.readlines():
+			# looks like:
+			# dataset: (dataset)
+			# archaic: Y/N
+			# reads: (path to reads)
+			szLine = szLine.rstrip()
+			if ( szLine == "" ):
+				continue
+			if( szLine.startswith( "#" ) ):
+				continue
+            
+			aWords = szLine.split()
+			if ( aWords[0] == "dataset:" ):
+				aDatasets.append( aWords[1] )
+
+	return aDatasets
+
+
+def szGetShortReadDataSetByDatasetName( wildcards ):
+	nLookingForDataset = 1
+	nLookingForReads = 2
+
+	nState = nLookingForDataset
+
+
+	with open( config["manifest"], "r" ) as fManifest:
+		for szLine in fManifest.readlines():
+			szLine = szLine.rstrip()
+			if ( szLine == "" ):
+				continue
+			if ( szLine.startswith( "#" ) ):
+				continue
+			# looks like:
+			# dataset: (dataset)
+			# archaic: Y/N
+			# reads: (path to reads)
+			aWords = szLine.split()
+			print( "aWords = ", aWords )
+			if ( ( nState == nLookingForDataset ) and \
+                ( aWords[0] == "dataset:" ) and ( aWords[1] == wildcards.szDatasetName ) ):
+				nState = nLookingForReads
+			elif( nState == nLookingForReads ):
+				if ( aWords[0] == "reads:" ):
+					return aWords[1]
+
+	exit( "was looking for {wildcards.szDatasetName} in " + config["manifest"] + " but couldn't find it" )
+
+
+# def szGetNameOfMerylDatabaseWithLowOccurrenceKmers():
+# 	szTemp = re.sub( r'.meryl$', '', config["name_of_subtracted_meryl_database" ] )
+# 	return szTemp + "_no_" + str( max_number_of_kmers_indicating_an_error ) + "_low_freq_kmers.meryl" 
+
+
+# rule all:
+# 	input: 
+
+
+# rule delete_intermediate_meryl_databases:
+# 	input: config["name_of_subtracted_meryl_database" ] + ".flag"
+# 	output: touch( "deleted_intermediate_meryl_databases" )
+# 	localrule: True
+# 	run:
+# 		# delete all of the intermediate*.meryl databases
+# 		szCommand = "rm -rf intermediate*.meryl"
+# 		print( "about to execute: " + szCommand )
+# 		shell( szCommand )
+
+# rule subtract_find_minus_remove:
+# 	input: "all_meryl_databases_created_flag"
+# 	output: touch( config["name_of_subtracted_meryl_database" ] + ".flag" )
+# 	resources:
+# 		threads=40,
+# 		mem=100
+# 	run:
+# 		# just creates an empty database
+# 		nIntermediateFile = 1
+# 		szIntermediateMerylDatabase = "intermediate1.meryl"
+# 		szCommand = "module load meryl/1.4.1 && meryl count k=21 output " + szIntermediateMerylDatabase
+# 		print( "about to execute: " + szCommand )
+# 		shell( szCommand )
+
+# 		for szMerylDatabaseToAdd in aFullPathOfMerylDatabaseOfKmersToFind:
+# 			nIntermediateFile += 1
+# 			szNextIntermediateMerylDatabase = "intermediate" + str( nIntermediateFile ) + ".meryl"
+# 			szCommand = "module load meryl/1.4.1 && meryl union-sum " + szIntermediateMerylDatabase + " " + szMerylDatabaseToAdd + " output " + szNextIntermediateMerylDatabase
+# 			print( "about to execute: " + szCommand )
+# 			shell( szCommand )
+
+# 			# delete previous intermediate meryl database--we won't need it again
+# 			szCommand = f"rm -rf {szIntermediateMerylDatabase}"
+# 			print( "about to execute: " + szCommand )
+# 			shell( szCommand )
+
+# 			szIntermediateMerylDatabase = szNextIntermediateMerylDatabase
+
+# 		for szMerylDatabaseToRemove in aFullPathOfMerylDatabaseOfKmersToRemove:
+# 			nIntermediateFile += 1
+# 			szNextIntermediateMerylDatabase = "intermediate" + str( nIntermediateFile ) + ".meryl"
+# 			szCommand = "module load meryl/1.4.1 && meryl difference " + szIntermediateMerylDatabase + " " + szMerylDatabaseToRemove + " output " + szNextIntermediateMerylDatabase
+# 			print( "about to execute: " + szCommand )
+# 			shell( szCommand )
+
+# 			# delete previous intermediate meryl database--we won't need it again
+# 			szCommand = f"rm -rf {szIntermediateMerylDatabase}"
+# 			print( "about to execute: " + szCommand )
+# 			shell( szCommand )
+
+# 			szIntermediateMerylDatabase = szNextIntermediateMerylDatabase
+
+# 		# how many kmers are left here
+# 		szCommand = "module load meryl/1.4.1 && meryl print " + szIntermediateMerylDatabase + "| wc -l >" + szIntermediateMerylDatabase + ".unique_kmers"
+# 		print( "about to execute: " + szCommand )
+# 		shell( szCommand )
+
+
+# 		# when get to here, the result is in szIntermediateMerylDatabase
+# 		# let's just rename that to the output
+# 		szCommand = "mv " + szIntermediateMerylDatabase + " " + config["name_of_subtracted_meryl_database" ]
+# 		print( "about to execute: " + szCommand )
+# 		shell( szCommand )
+
+
+
+
+# rule make_all_meryl_databases:
+# 	input: expand( config["where_to_put_meryl_databases"] + "/{szDatasetName}.meryl", szDatasetName = aGetAllDatasetNames()  )
+
+rule make_all_meryl_databases:
+	input: expand( config["where_to_put_meryl_databases"] + "/{szDatasetName}.no_low_freq_kmers.meryl", szDatasetName = aGetAllDatasetNames()  )
+
+
+rule remove_low_occurrence_kmers:
+	input:  config["where_to_put_meryl_databases"] + "/{szDatasetName}_genomescope/summary.txt"
+	output: directory( config["where_to_put_meryl_databases"] + "/{szDatasetName,[^.]+}.no_low_freq_kmers.meryl" )
+	resources:
+		threads=40,
+		mem=100
+	run:
+		nErrorKmersCutoff = -666
+		with open( input[0], "r" ) as fSummaryFile:
+			for szLine in fSummaryFile.readlines():
+				if (szLine.startswith( "Error Kmers Cutoff" ) ):
+					aWords = szLine.split()
+					# looks like:
+					# Error Kmers Cutoff 7
+					# 0      1     2     3
+					nErrorKmersCutoff = int( aWords[3] )
+					break
+
+		assert( nErrorKmersCutoff != -666 )
+
+		szCommand = "module load meryl/1.4.1 && meryl output {output}.tmp" + \
+			f" [ greater-than {nErrorKmersCutoff} " + config["where_to_put_meryl_databases"] + "/{wildcards.szDatasetName}.meryl" + " ] && mv {output}.tmp {output}"
+		print( "about to execute: " + szCommand )
+		shell( szCommand )
+
+
+rule make_error_cutoff:
+	input: config["where_to_put_meryl_databases"] + "/{szDatasetName}.histogram"
+	output: config["where_to_put_meryl_databases"] + "/{szDatasetName}_genomescope/summary.txt"
+	localrule: True
+	run:
+		szCommand = "module load R/4.4.0-openblas-rocky8 && Rscript genomescope_vertical_line.R " + config["where_to_put_meryl_databases"] + "/{wildcards.szDatasetName}.histogram 21 150 " + config["where_to_put_meryl_databases"] + "/{wildcards.szDatasetName}_genomescope"
+		print( "about to execute: " + szCommand )
+		shell( szCommand )
+
+# is this fast enough to be a localrule?
+rule make_histogram_for_one_dataset:
+	input: config["where_to_put_meryl_databases"] + "/{szDatasetName}.meryl"
+	output: config["where_to_put_meryl_databases"] + "/{szDatasetName}.histogram"
+	localrule: True
+	run:
+		szCommand = f"module load meryl/1.4.1 && meryl histogram {input} >{output}.tmp"
+		print( "about to execute: " + szCommand )
+		shell( szCommand )
+
+		szCommand = f"./convertMerylHistogramToJellyfishHistogram.py --szInputMerylHistogram {output}.tmp --szOutputJellyfishHistogram {output} && rm {output}.tmp"
+		print( "about to execute: " + szCommand )
+		shell( szCommand )
+
+
+
+rule make_meryl_database_for_one_dataset:
+	input: szGetShortReadDataSetByDatasetName
+	output: directory( config["where_to_put_meryl_databases"] + "/{szDatasetName,[^.]+}.meryl" )	
+	resources:
+		threads=40,
+		mem=100
+	run:
+		# debugging
+		print( "trying to generate " + str( output ) + " using input " + str( input ) )
+		# end debugging
+
+
+		szTemporaryMerylDatabaseName = str( output ) + ".almost_done"
+
+		szCommand = f"module load meryl/1.4.1 && meryl count k=21 {input} output " + szTemporaryMerylDatabaseName
+		print( "about to execute: " + szCommand )
+		shell( szCommand )
+		szCommand = f"mv {szTemporaryMerylDatabaseName} {{output}}"
+		print( "about to execute: " + szCommand )
+		shell( szCommand )
+
+

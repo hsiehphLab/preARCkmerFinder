@@ -1,0 +1,2 @@
+where_to_put_meryl_databases:  /projects/standard/hsiehph/shared/hsiehph_shared/short_read/ARC/meryl_databases2
+manifest: /projects/standard/hsiehph/shared/hsiehph_shared/short_read/ARC/meryl_databases2/make_no_low_freq_kmers/manifest.txt

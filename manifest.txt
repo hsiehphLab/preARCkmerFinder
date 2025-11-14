@@ -1,0 +1,16 @@
+dataset: altai
+archaic: Y
+reads: /projects/standard/hsiehph/shared/hsiehph_shared/short_read/ARC/Altai.sort.addRG.fq.gz
+
+dataset: denisova
+archaic: Y
+reads: /projects/standard/hsiehph/shared/hsiehph_shared/short_read/ARC/denisova.sort.addRG.fq.gz
+
+dataset: chag
+archaic: Y
+reads: /projects/standard/hsiehph/shared/hsiehph_shared/short_read/ARC/Chagyrskaya.sort.addRG_no0.fq.gz
+
+# dataset: vindija
+# archaic: Y
+# reads: /projects/standard/hsiehph/shared/hsiehph_shared/short_read/ARC/Vindija.sort.addRG.fq.gz
+
