@@ -7,9 +7,9 @@ import re
 
 configfile: "config.yaml"
 
-
-if not os.path.exists( "log" ):
-        os.makedirs("log" )
+# snakemake uses "logs" not "log"
+# if not os.path.exists( "log" ):
+#         os.makedirs("log" )
 
 # wildcard_constraints:
 #     # This constraint ensures the entire value captured by szDatasetName
@@ -63,7 +63,6 @@ def szGetShortReadDataSetByDatasetName( wildcards ):
 			# archaic: Y/N
 			# reads: (path to reads)
 			aWords = szLine.split()
-			print( "aWords = ", aWords )
 			if ( ( nState == nLookingForDataset ) and \
                 ( aWords[0] == "dataset:" ) and ( aWords[1] == wildcards.szDatasetName ) ):
 				nState = nLookingForReads
