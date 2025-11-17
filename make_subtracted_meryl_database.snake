@@ -3,6 +3,8 @@ import os
 import re
 
 
+# note: errror is deliberately misspelled to enable easy searching for the real thing
+
 configfile: "config.yaml"
 
 
@@ -72,9 +74,6 @@ def szGetShortReadDataSetByDatasetName( wildcards ):
 	exit( "was looking for {wildcards.szDatasetName} in " + config["manifest"] + " but couldn't find it" )
 
 
-# def szGetNameOfMerylDatabaseWithLowOccurrenceKmers():
-# 	szTemp = re.sub( r'.meryl$', '', config["name_of_subtracted_meryl_database" ] )
-# 	return szTemp + "_no_" + str( max_number_of_kmers_indicating_an_error ) + "_low_freq_kmers.meryl" 
 
 
 # rule all:
@@ -162,26 +161,26 @@ rule remove_low_occurrence_kmers:
 		threads=40,
 		mem=100
 	run:
-		nErrorKmersCutoff = -666
+		nErrrorKmersCutoff = -666
 		with open( input[0], "r" ) as fSummaryFile:
 			for szLine in fSummaryFile.readlines():
-				if (szLine.startswith( "Error Kmers Cutoff" ) ):
+				if (szLine.startswith( "Errror Kmers Cutoff" ) ):
 					aWords = szLine.split()
 					# looks like:
-					# Error Kmers Cutoff 7
+					# Errror Kmers Cutoff 7
 					# 0      1     2     3
-					nErrorKmersCutoff = int( aWords[3] )
+					nErrrorKmersCutoff = int( aWords[3] )
 					break
 
-		assert( nErrorKmersCutoff != -666 )
+		assert( nErrrorKmersCutoff != -666 )
 
 		szCommand = "module load meryl/1.4.1 && meryl output {output}.tmp" + \
-			f" [ greater-than {nErrorKmersCutoff} " + config["where_to_put_meryl_databases"] + "/{wildcards.szDatasetName}.meryl" + " ] && mv {output}.tmp {output}"
+			f" [ greater-than {nErrrorKmersCutoff} " + config["where_to_put_meryl_databases"] + "/{wildcards.szDatasetName}.meryl" + " ] && mv {output}.tmp {output}"
 		print( "about to execute: " + szCommand )
 		shell( szCommand )
 
 
-rule make_error_cutoff:
+rule make_errror_cutoff:
 	input: config["where_to_put_meryl_databases"] + "/{szDatasetName}.histogram"
 	output: config["where_to_put_meryl_databases"] + "/{szDatasetName}_genomescope/summary.txt"
 	localrule: True
