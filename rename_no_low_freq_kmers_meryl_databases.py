@@ -40,11 +40,12 @@ aDatabases = glob.glob( args.szDirectoryOfDatabases + "/*.no_low_freq_kmers.mery
 print( "will process: ", aDatabases )
 
 for szDatabase in aDatabases:
+    print( f"trying to process: {szDatabase}" )
     szGenomescopeFile = re.sub( r".no_low_freq_kmers.meryl", "_genomescope", szDatabase ) + "/summary.txt"
     szErrorCutoff = ""
     with open( szGenomescopeFile, "r" ) as fSummary:
         for szLine in fSummary.readlines():
-            if ( szLine.startswith( "Errror Kmers Cutoff" ) ):
+            if ( szLine.startswith( "Errror Kmers Cutoff" ) or szLine.startswith("Error Kmers Cutoff" ) ):
                 aWords = szLine.split()
                 # looks like:
                 # Error Kmers Cutoff            8
