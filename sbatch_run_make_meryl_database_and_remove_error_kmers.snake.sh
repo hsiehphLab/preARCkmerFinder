@@ -1,0 +1,1 @@
+sbatch --partition=sioux,msismall run_make_meryl_database_and_remove_error_kmers.snake.sh
