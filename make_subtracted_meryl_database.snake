@@ -1,0 +1,162 @@
+import sys
+import os
+import re
+import glob
+
+# note: errror is deliberately misspelled to enable easy searching for the real thing
+
+configfile: "config.yaml"
+
+
+def szGetArchaicFullPath( szArchaic ):
+
+    return szGetFullPath( config["where_to_find_archaic_meryl_databases"], szArchaic )
+
+def szGetAfricanFullPath( szAfrican ):
+
+    return szGetFullPath( config["where_to_find_african_meryl_databases"], szAfrican )
+
+def szGetFullPath( szWhereToFindDataset, szDatasetName ):
+
+    szGlobPattern = szWhereToFindDataset + "/" + szDatasetName + ".no_*_freq_kmers.meryl"
+    aFullPath = glob.glob( szGlobPattern )
+    assert len( aFullPath ) == 1, f"glob.glob returned array with length {len( aFullPath ) } = {aFullPath} while using global pattern {szGlobPattern}"
+
+    return aFullPath[0]
+
+
+wildcard_constraints:
+    # Restrict the value of {szDatasetName} to exclude periods globally
+    szArchaic = "[^_.]+"
+
+
+
+
+def aGetAllSubtractedDatabaseNames():
+    aArchaics = []
+    aAfricans = []
+    szDataset = ""
+    with open( config["manifest"], "r" ) as fManifest:
+        for szLine in fManifest.readlines():
+            # looks like:
+            # dataset: (dataset)
+            # archaic: Y/N
+            # reads: (path to reads)
+            szLine = szLine.rstrip()
+            if ( szLine == "" ):
+                continue
+            if( szLine.startswith( "#" ) ):
+                continue
+            
+            aWords = szLine.split()
+            if ( aWords[0] == "dataset:" ):
+                szDataset = aWords[1]
+            elif( aWords[0] == "archaic:" ):
+                assert szDataset != ""
+                if ( aWords[1] == "Y" ):
+                    aArchaics.append( szDataset )
+                elif( aWords[1] == "N" ):
+                    aAfricans.append( szDataset )
+                else:
+                    assert False
+
+                szDataset = ""
+    #with open( config["manifest"], "r" ) as fManifest:
+
+    aSubtractedDatabase = []
+    for szArchaic in aArchaics:
+            szSubtractedDatabase = szArchaic + "_minus"
+            for szAfrican in aAfricans:
+                    szSubtractedDatabase += "_"
+                    szSubtractedDatabase += szAfrican
+            szSubtractedDatabase += ".meryl"
+            aSubtractedDatabase.append( szSubtractedDatabase )
+
+    print( "aSubtractedDatabase = ", aSubtractedDatabase )
+
+    return aSubtractedDatabase
+# def aGetAllSubtractedDatabaseNames():
+                        
+
+
+rule all:
+	input: expand( config["where_to_put_meryl_databases"] + "/{szOneSubtractedDatabase}", szOneSubtractedDatabase = aGetAllSubtractedDatabaseNames() )
+
+
+# rule delete_intermediate_meryl_databases:
+# 	input: config["name_of_subtracted_meryl_database" ] + ".flag"
+# 	output: touch( "deleted_intermediate_meryl_databases" )
+# 	localrule: True
+# 	run:
+# 		# delete all of the intermediate*.meryl databases
+# 		szCommand = "rm -rf intermediate*.meryl"
+# 		print( "about to execute: " + szCommand )
+# 		shell( szCommand )
+
+rule subtract_find_minus_remove:
+        output: directory( config["where_to_put_meryl_databases"] + "/{szArchaic}_minus_{szMultipleAfricans}.meryl" )
+        resources:
+                threads=40,
+                mem=100
+        run:
+                szArchaic = str( wildcards.szArchaic )
+                szMultipleAfricans = str( wildcards.szMultipleAfricans )
+                szArchaicFullPath = szGetArchaicFullPath( szArchaic )
+                print( f"archaic: {szArchaicFullPath}" )
+
+                aWords = szMultipleAfricans.split( '_' )
+                aAfricanFullPath = []
+                for szWord in aWords:
+                    szAfricanFullPath = szGetAfricanFullPath( szWord )
+                    aAfricanFullPath.append( szAfricanFullPath )
+                    print( f"African: {szAfricanFullPath}" )
+                print( f"trying to create {output}" )
+
+                szJustSomethingUnique = f"{wildcards.szArchaic}_minus_{wildcards.szMultipleAfricans}"
+                nIntermediateFile = 0
+                for szMerylDatabaseToRemove in aAfricanFullPath:
+                        nIntermediateFile += 1
+                        if ( nIntermediateFile == 1 ):
+                            szIntermediateMerylDatabase = szArchaicFullPath
+
+                        szNextIntermediateMerylDatabase = szJustSomethingUnique + "_intermediate" + str( nIntermediateFile ) + ".meryl"
+                        szCommand = "module load meryl/1.4.1 && meryl difference threads=40 " + szIntermediateMerylDatabase + " " + szMerylDatabaseToRemove + " output " + szNextIntermediateMerylDatabase
+                        print( "about to execute: " + szCommand )
+                        shell( szCommand )
+
+                        # delete previous intermediate meryl database--we won't need it again
+                        if ( nIntermediateFile > 1 ):
+                            szCommand = f"rm -rf {szIntermediateMerylDatabase}"
+                            print( "about to execute: " + szCommand )
+                            shell( szCommand )
+
+                        szIntermediateMerylDatabase = szNextIntermediateMerylDatabase
+
+                # for szMerylDatabaseToRemove in aAfricanFullPath:
+
+                        
+                # how many kmers are left here--no!  don't do this!  it will take forever!
+                # szCommand = "module load meryl/1.4.1 && meryl print " + szIntermediateMerylDatabase + "| wc -l >" + szIntermediateMerylDatabase + ".unique_kmers"
+                # print( "about to execute: " + szCommand )
+                # shell( szCommand )
+
+
+                # when get to here, the result is in szIntermediateMerylDatabase
+                # let's just rename that to the output
+                szCommand = "mv " + szIntermediateMerylDatabase + " " + str( output )
+                print( "about to execute: " + szCommand )
+                shell( szCommand )
+
+                # while we are here, let's create a histogram and count kmers
+                szHistogram = re.sub( r'\.meryl', r'\.histogram', str( output ) )
+                szCommand = "module load meryl/1.4.1 && meryl histogram " + str( output ) + f" >{szHistogram}"
+                print( "about to execute: " + szCommand )
+                shell( szCommand )
+
+
+                szNumberOfKmers = re.sub( r'\.meryl', r'\.sumOfKmers', str( output ) )
+                szCommand = "cat " + szHistogram + " | awk '{{x += $2}} END {{print x }}' | numfmt --grouping >" + szNumberOfKmers
+                print( "about to execute: " + szCommand )
+                shell( szCommand )
+
+                
