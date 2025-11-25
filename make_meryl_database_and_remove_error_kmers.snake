@@ -7,17 +7,6 @@ import re
 
 configfile: "config.yaml"
 
-# snakemake uses "logs" not "log"
-# if not os.path.exists( "log" ):
-#         os.makedirs("log" )
-
-# wildcard_constraints:
-#     # This constraint ensures the entire value captured by szDatasetName
-#     # does NOT end with the unwanted suffix.
-#     szDatasetName = r"^(?!.*_no_low_freq_kmers.+)"
-
-#wildcard_constraints:
-#        szDatasetName=r".*(?!.*_no_low_freq_kmers)"
 
 wildcard_constraints:
     # Restrict the value of {szDatasetName} to exclude periods globally
@@ -75,79 +64,6 @@ def szGetShortReadDataSetByDatasetName( wildcards ):
 
 
 
-# rule all:
-# 	input: 
-
-
-# rule delete_intermediate_meryl_databases:
-# 	input: config["name_of_subtracted_meryl_database" ] + ".flag"
-# 	output: touch( "deleted_intermediate_meryl_databases" )
-# 	localrule: True
-# 	run:
-# 		# delete all of the intermediate*.meryl databases
-# 		szCommand = "rm -rf intermediate*.meryl"
-# 		print( "about to execute: " + szCommand )
-# 		shell( szCommand )
-
-# rule subtract_find_minus_remove:
-# 	input: "all_meryl_databases_created_flag"
-# 	output: touch( config["name_of_subtracted_meryl_database" ] + ".flag" )
-# 	resources:
-# 		threads=40,
-# 		mem=100
-# 	run:
-# 		# just creates an empty database
-# 		nIntermediateFile = 1
-# 		szIntermediateMerylDatabase = "intermediate1.meryl"
-# 		szCommand = "module load meryl/1.4.1 && meryl count k=21 output " + szIntermediateMerylDatabase
-# 		print( "about to execute: " + szCommand )
-# 		shell( szCommand )
-
-# 		for szMerylDatabaseToAdd in aFullPathOfMerylDatabaseOfKmersToFind:
-# 			nIntermediateFile += 1
-# 			szNextIntermediateMerylDatabase = "intermediate" + str( nIntermediateFile ) + ".meryl"
-# 			szCommand = "module load meryl/1.4.1 && meryl union-sum " + szIntermediateMerylDatabase + " " + szMerylDatabaseToAdd + " output " + szNextIntermediateMerylDatabase
-# 			print( "about to execute: " + szCommand )
-# 			shell( szCommand )
-
-# 			# delete previous intermediate meryl database--we won't need it again
-# 			szCommand = f"rm -rf {szIntermediateMerylDatabase}"
-# 			print( "about to execute: " + szCommand )
-# 			shell( szCommand )
-
-# 			szIntermediateMerylDatabase = szNextIntermediateMerylDatabase
-
-# 		for szMerylDatabaseToRemove in aFullPathOfMerylDatabaseOfKmersToRemove:
-# 			nIntermediateFile += 1
-# 			szNextIntermediateMerylDatabase = "intermediate" + str( nIntermediateFile ) + ".meryl"
-# 			szCommand = "module load meryl/1.4.1 && meryl difference " + szIntermediateMerylDatabase + " " + szMerylDatabaseToRemove + " output " + szNextIntermediateMerylDatabase
-# 			print( "about to execute: " + szCommand )
-# 			shell( szCommand )
-
-# 			# delete previous intermediate meryl database--we won't need it again
-# 			szCommand = f"rm -rf {szIntermediateMerylDatabase}"
-# 			print( "about to execute: " + szCommand )
-# 			shell( szCommand )
-
-# 			szIntermediateMerylDatabase = szNextIntermediateMerylDatabase
-
-# 		# how many kmers are left here
-# 		szCommand = "module load meryl/1.4.1 && meryl print " + szIntermediateMerylDatabase + "| wc -l >" + szIntermediateMerylDatabase + ".unique_kmers"
-# 		print( "about to execute: " + szCommand )
-# 		shell( szCommand )
-
-
-# 		# when get to here, the result is in szIntermediateMerylDatabase
-# 		# let's just rename that to the output
-# 		szCommand = "mv " + szIntermediateMerylDatabase + " " + config["name_of_subtracted_meryl_database" ]
-# 		print( "about to execute: " + szCommand )
-# 		shell( szCommand )
-
-
-
-
-# rule make_all_meryl_databases:
-# 	input: expand( config["where_to_put_meryl_databases"] + "/{szDatasetName}.meryl", szDatasetName = aGetAllDatasetNames()  )
 
 rule make_all_meryl_databases:
 	input: expand( config["where_to_put_meryl_databases"] + "/{szDatasetName}.no_low_freq_kmers.meryl", szDatasetName = aGetAllDatasetNames()  )
