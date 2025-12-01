@@ -679,12 +679,10 @@ report_results<-function(kmer_hist,kmer_hist_orig, k, container, foldername)
     cat(paste(sprintf(format_column_1,"Genome Repeat Length"),  sprintf(format_column_2,bp_format(repeat_len[2])), sprintf(format_column_3,bp_format(repeat_len[1])), sep=""),                                  file=summaryFile, sep="\n", append=TRUE)
     cat(paste(sprintf(format_column_1,"Genome Unique Length"),  sprintf(format_column_2,bp_format(unique_len[2])), sprintf(format_column_3,bp_format(unique_len[1])), sep=""),                                  file=summaryFile, sep="\n", append=TRUE)
     cat(paste(sprintf(format_column_1,"Model Fit "),            sprintf(format_column_2,percentage_format(model_fit_allscore[1])), sprintf(format_column_3,percentage_format(model_fit_fullscore[1])), sep=""), file=summaryFile, sep="\n", append=TRUE)
+    cat(paste(sprintf(format_column_1,"Read Error Rate"),       sprintf(format_column_2,percentage_format(error_rate[1])), sprintf(format_column_3,percentage_format(error_rate[2])), sep=""),                  file=summaryFile, sep="\n", append=TRUE)
     # *** DG MODIFICATION START: Write Intersection X to summary.txt ***
-    # deliberate misspelling of Error allowing grepping for errors
-    cat(paste(sprintf(format_column_1,"Read Errror Rate"),       sprintf(format_column_2,percentage_format(error_rate[1])), sprintf(format_column_3,percentage_format(error_rate[2])), sep=""),                  file=summaryFile, sep="\n", append=TRUE)
     if (intersection_x != -1) {
-        #Errror misspelling to help finding errors in slurm file
-        cat(paste(sprintf(format_column_1,"Errror Kmers Cutoff"),   sprintf(format_column_2,plain_format(intersection_x)), sprintf(format_column_3,""), sep=""),                                                     file=summaryFile, sep="\n", append=TRUE)
+        cat(paste(sprintf(format_column_1,"Error Kmers Cutoff"),   sprintf(format_column_2,plain_format(intersection_x)), sprintf(format_column_3,""), sep=""),                                                     file=summaryFile, sep="\n", append=TRUE)
     }
     # *** DG MODIFICATION END ***
     if (VERBOSE) {
