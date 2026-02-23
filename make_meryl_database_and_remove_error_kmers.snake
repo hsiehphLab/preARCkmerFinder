@@ -100,7 +100,8 @@ rule make_errror_cutoff:
 	output: config["where_to_put_meryl_databases"] + "/{szDatasetName}_genomescope/summary.txt"
 	localrule: True
 	run:
-		szCommand = "module load R/4.4.0-openblas-rocky8 && Rscript genomescope_vertical_line.R " + config["where_to_put_meryl_databases"] + "/{wildcards.szDatasetName}.histogram 21 150 " + config["where_to_put_meryl_databases"] + "/{wildcards.szDatasetName}_genomescope"
+        szOutputDirectory = config["where_to_put_meryl_databases"] + f"/{wildcards.szDatasetName}_genomescope"
+		szCommand = f"module load R/4.4.0-openblas-rocky8 && Rscript genomescope2.R -i {input} -k 21 -o {szOutputDirectory}"
 		print( "about to execute: " + szCommand )
 		shell( szCommand )
 
