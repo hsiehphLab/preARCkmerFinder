@@ -70,7 +70,7 @@ rule make_all_meryl_databases:
 
 
 rule remove_low_occurrence_kmers:
-	input:  config["where_to_put_meryl_databases"] + "/{szDatasetName}_genomescope/summary.txt"
+	input:  config["where_to_put_meryl_databases"] + "/{szDatasetName}_genomescope/summary.txt", config["where_to_put_meryl_databases"] + "/{szDatasetName}.meryl" 
 	output: directory( config["where_to_put_meryl_databases"] + "/{szDatasetName,[^.]+}.no_low_freq_kmers.meryl" )
 	resources:
 		threads=40,
@@ -100,8 +100,8 @@ rule make_errror_cutoff:
 	output: config["where_to_put_meryl_databases"] + "/{szDatasetName}_genomescope/summary.txt"
 	localrule: True
 	run:
-        szOutputDirectory = config["where_to_put_meryl_databases"] + f"/{wildcards.szDatasetName}_genomescope"
-		szCommand = f"module load R/4.4.0-openblas-rocky8 && Rscript genomescope2.R -i {input} -k 21 -o {szOutputDirectory}"
+		szOutputDirectory = config["where_to_put_meryl_databases"] + f"/{wildcards.szDatasetName}_genomescope"
+		szCommand = f"module load R/4.4.0-openblas-rocky8 && Rscript genomescope2.R -i {input[0]} -k 21 -o {szOutputDirectory}"
 		print( "about to execute: " + szCommand )
 		shell( szCommand )
 
