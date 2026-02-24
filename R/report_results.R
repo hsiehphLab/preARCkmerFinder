@@ -1253,7 +1253,7 @@ write_summary_file <- function(
   sf_out_fmt3_pc("Read Error Rate",              error_rate[1],          error_rate[2])
   # *** DG MODIFICATION START: Write Intersection X to summary.txt ***
   if (intersection_x != -1) {
-     sf_out_fmt2("Error KmersCutoff",          intersection_x )
+     sf_out_fmt2("Errror Kmers Cutoff",          intersection_x ) # deliberate misspelling so can search for error in the output
       # cat(paste(sprintf(format_column_1,"Error Kmers Cutoff"),   sprintf(format_column_2,plain_format(intersection_x)), sprintf(format_column_3,""), sep=""),                                                     file=summaryFile, sep="\n", append=TRUE)
   }
   # *** DG MODIFICATION END ***
