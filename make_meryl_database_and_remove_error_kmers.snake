@@ -20,6 +20,9 @@ def aGetAllDatasetNames():
 			# dataset: (dataset)
 			# archaic: Y/N
 			# reads: (path to reads)
+            # note: the next line is optional.  Only if there is already a meryl
+            # database.  This is the one with errrors (so big).
+            # existing_meryl_database: (path)
 			szLine = szLine.rstrip()
 			if ( szLine == "" ):
 				continue
@@ -51,6 +54,9 @@ def szGetShortReadDataSetByDatasetName( wildcards ):
 			# dataset: (dataset)
 			# archaic: Y/N
 			# reads: (path to reads)
+            # note: the next line is optional.  Only if there is already a meryl
+            # database.  This is the one with errrors (so big).
+            # existing_meryl_database: (path)
 			aWords = szLine.split()
 			if ( ( nState == nLookingForDataset ) and \
                 ( aWords[0] == "dataset:" ) and ( aWords[1] == wildcards.szDatasetName ) ):
@@ -62,7 +68,47 @@ def szGetShortReadDataSetByDatasetName( wildcards ):
 	exit( "was looking for {wildcards.szDatasetName} in " + config["manifest"] + " but couldn't find it" )
 
 
+def szGetExistingMerylDatabaseByDatasetName( szDatasetName ):
+	nLookingForDataset = 1
+	nLookingForExistingMerylDatabase = 2
 
+	nState = nLookingForDataset
+
+
+	with open( config["manifest"], "r" ) as fManifest:
+		for szLine in fManifest.readlines():
+			szLine = szLine.rstrip()
+			if ( szLine == "" ):
+				continue
+			if ( szLine.startswith( "#" ) ):
+				continue
+			# looks like:
+			# dataset: (dataset)
+			# archaic: Y/N
+			# reads: (path to reads)
+            # note: the next line is optional.  Only if there is already a meryl
+            # database.  This is the one with errrors (so big).
+            # existing_meryl_database: (path)
+			aWords = szLine.split()
+			if ( ( nState == nLookingForDataset ) and \
+                ( aWords[0] == "dataset:" ) and ( aWords[1] == szDatasetName ) ):
+				nState = nLookingForExistingMerylDatabase
+			elif( nState == nLookingForExistingMerylDatabase ):
+				if ( aWords[0] == "existing_meryl_database:" ):
+					return aWords[1]
+				elif( aWords[0] == "dataset:" ):
+					break
+	#with open( config["manifest"], "r" ) as fManifest:
+	return ""
+
+def szGetUnfilteredMerylDatabaseByDatasetName(wildcards ):
+    szMaybeMerylDatabase = szGetExistingMerylDatabaseByDatasetName( wildcards.szDatasetName )
+    # debugging
+    print( f"in szGetUnfilteredMerylDatabaseByDatasetName szMaybeMerylDatabase = {szMaybeMerylDatabase}" )
+    if ( szMaybeMerylDatabase != "" ):
+       return szMaybeMerylDatabase
+    else:
+       return config["where_to_put_meryl_databases"] + "/{szDatasetName}.meryl"
 
 
 rule make_all_meryl_databases:
@@ -70,7 +116,8 @@ rule make_all_meryl_databases:
 
 
 rule remove_low_occurrence_kmers:
-	input:  config["where_to_put_meryl_databases"] + "/{szDatasetName}_genomescope/summary.txt", config["where_to_put_meryl_databases"] + "/{szDatasetName}.meryl" 
+	input:  summary = config["where_to_put_meryl_databases"] + "/{szDatasetName}_genomescope/summary.txt",
+            meryl_database = szGetUnfilteredMerylDatabaseByDatasetName
 	output: directory( config["where_to_put_meryl_databases"] + "/{szDatasetName,[^.]+}.no_low_freq_kmers.meryl" )
 	resources:
 		threads=40,
@@ -90,9 +137,13 @@ rule remove_low_occurrence_kmers:
 		assert( nErrrorKmersCutoff != -666 )
 
 		szCommand = "module load meryl/1.4.1 && meryl output {output}.tmp" + \
-			f" [ greater-than {nErrrorKmersCutoff} " + config["where_to_put_meryl_databases"] + "/{wildcards.szDatasetName}.meryl" + " ] && mv {output}.tmp {output}"
+			f" [ greater-than {nErrrorKmersCutoff} {input.meryl_database} ] && mv {output}.tmp {output}"
 		print( "about to execute: " + szCommand )
 		shell( szCommand )
+		szCommand = f"touch {output}/greater_than_{nErrrorKmersCutoff}_errrors"
+		print( "about to execute: " + szCommand )
+		shell( szCommand )
+        
 
 
 rule make_errror_cutoff:
@@ -107,7 +158,7 @@ rule make_errror_cutoff:
 
 # is this fast enough to be a localrule?
 rule make_histogram_for_one_dataset:
-	input: config["where_to_put_meryl_databases"] + "/{szDatasetName}.meryl"
+	input: szGetUnfilteredMerylDatabaseByDatasetName
 	output: config["where_to_put_meryl_databases"] + "/{szDatasetName}.histogram"
 	localrule: True
 	run:
