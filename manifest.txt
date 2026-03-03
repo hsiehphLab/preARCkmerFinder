@@ -9,6 +9,8 @@ reads: /projects/standard/hsiehph/shared/hsiehph_shared/short_read/ARC/denisova.
 dataset: chag
 archaic: Y
 reads: /projects/standard/hsiehph/shared/hsiehph_shared/short_read/ARC/Chagyrskaya.sort.addRG_no0.fq.gz
+# the next line is optional
+existing_meryl_database: /scratch.global/gordo893/sunny/chag.meryl
 
 # dataset: vindija
 # archaic: Y
