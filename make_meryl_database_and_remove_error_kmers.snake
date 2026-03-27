@@ -8,9 +8,9 @@ import re
 configfile: "config.yaml"
 
 
-wildcard_constraints:
-    # Restrict the value of {szDatasetName} to exclude periods globally
-    szDatasetName = "[^.]+"
+#wildcard_constraints:
+#    # Restrict the value of {szDatasetName} to exclude periods globally
+#    szDatasetName = "[^.]+"
     
 def aGetAllDatasetNames():
 	aDatasets = []
@@ -118,7 +118,7 @@ rule make_all_meryl_databases:
 rule remove_low_occurrence_kmers:
 	input:  summary = config["where_to_put_meryl_databases"] + "/{szDatasetName}_genomescope/summary.txt",
             meryl_database = szGetUnfilteredMerylDatabaseByDatasetName
-	output: directory( config["where_to_put_meryl_databases"] + "/{szDatasetName,[^.]+}.no_low_freq_kmers.meryl" )
+	output: directory( config["where_to_put_meryl_databases"] + "/{szDatasetName}.no_low_freq_kmers.meryl" )
 	resources:
 		threads=40,
 		mem=100
@@ -174,7 +174,7 @@ rule make_histogram_for_one_dataset:
 
 rule make_meryl_database_for_one_dataset:
 	input: szGetShortReadDataSetByDatasetName
-	output: directory( config["where_to_put_meryl_databases"] + "/{szDatasetName,[^.]+}.meryl" )	
+	output: directory( config["where_to_put_meryl_databases"] + "/{szDatasetName}.meryl" )	
 	resources:
 		threads=40,
 		mem=100
